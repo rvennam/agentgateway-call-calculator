@@ -451,7 +451,7 @@
         <div class="brand-label">Solo.io · AgentGateway</div>
       </div>
       <h1>AgentGateway Call Volume Calculator</h1>
-      <p class="subtitle">Estimate per-call sizing for prospects deploying Claude Cowork, Claude Code (CLI), or any agent rollout where AgentGateway fronts the MCP calls.</p>
+      <p class="subtitle">Estimate per-call sizing for prospects deploying Claude Cowork, Claude Code (CLI), or any agent rollout where AgentGateway fronts the LLM and MCP traffic.</p>
     </header>
 
     <div class="layout">
@@ -497,13 +497,13 @@
 
           <div class="field">
             <label class="field-label" for="calls">
-              Tool calls per prompt — baseline
+              AgentGateway calls per prompt — baseline
               <span class="tooltip" tabindex="0">?
-                <span class="tip-body">Knowledge-worker chat (Cowork-style) lands in the 3–12 range — single-shot lookups 1–3, multi-step automation 5–15. Agentic coding (Claude Code CLI) runs higher: 10–30+ per turn with file reads, greps, edits, and test runs. Use pilot data if available; otherwise 5 is a defensible midpoint for mixed workforces.</span>
+                <span class="tip-body">Count both LLM round-trips and MCP tool calls — AgentGateway fronts both. A typical agent turn = N LLM calls (reasoning steps) + M tool calls. Knowledge-worker chat: 5–15 combined per prompt. Agentic coding (Claude Code CLI): 20–50+ per turn (5–15 LLM round-trips × multiple tool calls each). Use pilot data if available; 10 is a defensible blended midpoint.</span>
               </span>
             </label>
             <div class="input-row">
-              <input type="range" id="calls-range" min="3" max="25" step="1" />
+              <input type="range" id="calls-range" min="3" max="50" step="1" />
               <input type="number" id="calls" min="1" step="1" />
             </div>
           </div>
@@ -596,7 +596,7 @@
       employees:        5000,   // total employees
       dauPct:           60,     // daily active rate %
       promptsPerDay:    20,     // prompts per active user per day
-      callsPerPrompt:   5,      // tool calls per prompt (baseline)
+      callsPerPrompt:   10,     // AgentGateway calls per prompt (LLM round-trips + tool calls), baseline
       workingDays:      250,    // working days per year
       rampMultiplier:   3.0,    // year-1 ramp multiplier by month 12
       showRamp:         true,   // show monthly ramp chart by default
@@ -761,7 +761,7 @@
       $('assumptions').innerHTML =
         `Assuming <strong>${fmtInt(base.employees)} employees</strong> with a <strong>${base.dauPct}% daily active rate</strong> ` +
         `yields <strong>${fmtInt(dailyActive)} daily active users</strong>, each generating ` +
-        `<strong>${base.promptsPerDay} prompts/day</strong> at an average of <strong>${base.callsPerPrompt} tool calls/prompt</strong> at launch, ` +
+        `<strong>${base.promptsPerDay} prompts/day</strong> at an average of <strong>${base.callsPerPrompt} AgentGateway calls/prompt</strong> at launch (LLM round-trips + MCP tool calls combined), ` +
         `ramping to <strong>${peakCalls.toFixed(1)} calls/prompt</strong> by month 12 (${base.ramp.toFixed(1)}× growth). ` +
         `Across <strong>${base.workingDays} working days/year</strong>, this projects ` +
         `<strong>${fmtInt(expected.year1Total)} Year-1 AgentGateway calls</strong> ` +
@@ -861,7 +861,7 @@
         `  • Employees: ${fmtInt(base.employees)}`,
         `  • Daily active rate: ${base.dauPct}%  (${fmtInt(expected.dailyActiveUsers)} DAU)`,
         `  • Prompts per active user per day: ${base.promptsPerDay}`,
-        `  • Tool calls per prompt (baseline → peak): ${base.callsPerPrompt} → ${peakCalls.toFixed(1)}`,
+        `  • AgentGateway calls per prompt — LLM + tool (baseline → peak): ${base.callsPerPrompt} → ${peakCalls.toFixed(1)}`,
         `  • Year-1 ramp multiplier: ${base.ramp.toFixed(1)}×`,
         `  • Working days per year: ${base.workingDays}`,
         '',

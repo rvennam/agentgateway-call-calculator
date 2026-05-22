@@ -1,6 +1,6 @@
 # AgentGateway Call Volume Calculator
 
-A single-file, client-side calculator that helps Solo.io sellers estimate AgentGateway call volume for prospects rolling out Claude — whether that's Claude Cowork (chat), Claude Code (CLI/agentic coding), or any deployment where AgentGateway fronts the MCP tool calls. Per-call pricing scales with `employees × DAU × prompts × calls-per-prompt × working days`, ramped across the first year of adoption. The tool shows Conservative / Expected / Aggressive scenarios, a monthly ramp chart, a plain-English assumptions paragraph, and a one-click "Copy summary" for dropping into email or CRM.
+A single-file, client-side calculator that helps Solo.io sellers estimate AgentGateway call volume for prospects rolling out Claude — whether that's Claude Cowork (chat), Claude Code (CLI/agentic coding), or any deployment where AgentGateway fronts the LLM and MCP traffic. AgentGateway is primarily an **LLM gateway** (it fronts every model call), and also fronts MCP tool calls — so per-call pricing scales with the combined fanout: `employees × DAU × prompts × AGW-calls-per-prompt × working days`, ramped across the first year of adoption. The tool shows Conservative / Expected / Aggressive scenarios, a monthly ramp chart, a plain-English assumptions paragraph, and a one-click "Copy summary" for dropping into email or CRM.
 
 ## Deploy to GitHub Pages
 
