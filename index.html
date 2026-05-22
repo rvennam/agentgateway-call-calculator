@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentGateway Call Volume Calculator — Claude Cowork</title>
+  <title>AgentGateway Call Volume Calculator — Claude Cowork & Claude Code</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -451,7 +451,7 @@
         <div class="brand-label">Solo.io · AgentGateway</div>
       </div>
       <h1>AgentGateway Call Volume Calculator</h1>
-      <p class="subtitle">Estimate per-call sizing for prospects deploying Claude Cowork.</p>
+      <p class="subtitle">Estimate per-call sizing for prospects deploying Claude Cowork, Claude Code (CLI), or any agent rollout where AgentGateway fronts the MCP calls.</p>
     </header>
 
     <div class="layout">
@@ -485,7 +485,10 @@
 
           <div class="field">
             <label class="field-label" for="prompts">
-              Prompts per active user per day
+              Prompts / turns per active user per day
+              <span class="tooltip" tabindex="0">?
+                <span class="tip-body">For Cowork-style chat, count user prompts. For Claude Code (CLI), count agent turns — each turn typically fans out to multiple MCP tool calls. 15–25 is typical for active knowledge workers; 30–60+ for heavy CLI/agentic-coding users.</span>
+              </span>
             </label>
             <div class="input-row">
               <input type="number" id="prompts" min="1" step="1" />
@@ -496,7 +499,7 @@
             <label class="field-label" for="calls">
               Tool calls per prompt — baseline
               <span class="tooltip" tabindex="0">?
-                <span class="tip-body">Empirical range is 3–12 for knowledge-worker agent workloads. Single-shot lookups average 1–3; multi-step automation averages 5–15. Use pilot data if available; otherwise default 5 is a defensible midpoint.</span>
+                <span class="tip-body">Knowledge-worker chat (Cowork-style) lands in the 3–12 range — single-shot lookups 1–3, multi-step automation 5–15. Agentic coding (Claude Code CLI) runs higher: 10–30+ per turn with file reads, greps, edits, and test runs. Use pilot data if available; otherwise 5 is a defensible midpoint for mixed workforces.</span>
               </span>
             </label>
             <div class="input-row">
@@ -852,7 +855,7 @@
       const peakCalls = base.callsPerPrompt * base.ramp;
 
       const lines = [
-        'AgentGateway Call Volume Estimate — Claude Cowork deployment',
+        'AgentGateway Call Volume Estimate — Claude Cowork / Claude Code deployment',
         '',
         'Assumptions:',
         `  • Employees: ${fmtInt(base.employees)}`,
