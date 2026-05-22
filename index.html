@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentGateway Call Volume Calculator — Claude Cowork</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --accent: #0095CE;
+      --accent-dark: #007AA8;
+      --accent-soft: #E6F5FB;
+      --bg: #F7F8FA;
+      --surface: #FFFFFF;
+      --border: #E4E7EB;
+      --border-strong: #CBD2D9;
+      --text: #1F2933;
+      --text-muted: #616E7C;
+      --text-subtle: #9AA5B1;
+      --success: #10B981;
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+      --radius: 8px;
+      --radius-sm: 6px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .brand-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .container { padding: 20px 16px 32px; }
+      h1 { font-size: 20px; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card + .card { margin-top: 16px; }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin: 0 0 16px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: help;
+      user-select: none;
+    }
+
+    .tooltip:hover { background: var(--accent); color: white; }
+
+    .tooltip .tip-body {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 260px;
+      padding: 10px 12px;
+      background: #1F2933;
+      color: #F5F7FA;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+      border-radius: var(--radius-sm);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+      z-index: 10;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .tooltip .tip-body::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1F2933;
+    }
+
+    .tooltip:hover .tip-body { opacity: 1; }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--surface);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--surface);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+    }
+
+    input[type="number"] {
+      width: 92px;
+      padding: 7px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      text-align: right;
+      transition: border-color 120ms, box-shadow 120ms;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .input-suffix {
+      font-size: 12px;
+      color: var(--text-subtle);
+      min-width: 16px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider-switch {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--border-strong);
+      transition: background 160ms;
+      border-radius: 20px;
+    }
+
+    .slider-switch::before {
+      position: absolute;
+      content: "";
+      width: 16px;
+      height: 16px;
+      left: 2px;
+      top: 2px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 160ms;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .switch input:checked + .slider-switch { background: var(--accent); }
+    .switch input:checked + .slider-switch::before { transform: translateX(16px); }
+
+    /* Results */
+    .hero {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 8px;
+    }
+
+    .hero-number {
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-secondary {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-top: 6px;
+    }
+
+    .hero-copy {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 120ms, border-color 120ms;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.12);
+      color: white;
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.22); }
+    .btn.copied { background: var(--success); border-color: var(--success); }
+
+    table.scenarios {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    table.scenarios th, table.scenarios td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table.scenarios th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 600;
+      background: #FAFBFC;
+    }
+
+    table.scenarios td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    table.scenarios tr.expected td {
+      background: var(--accent-soft);
+      font-weight: 500;
+    }
+
+    table.scenarios tr.expected td:first-child {
+      border-left: 3px solid var(--accent);
+    }
+
+    table.scenarios tr:last-child td { border-bottom: none; }
+
+    .scenario-name {
+      font-weight: 500;
+    }
+
+    .scenario-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    .assumptions {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .assumptions strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    footer {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-subtle);
+      text-align: center;
+    }
+
+    .copy-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text);
+      color: white;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms, transform 160ms;
+      z-index: 100;
+    }
+
+    .copy-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-row">
+        <div class="brand-dot"></div>
+        <div class="brand-label">Solo.io · AgentGateway</div>
+      </div>
+      <h1>AgentGateway Call Volume Calculator</h1>
+      <p class="subtitle">Estimate per-call sizing for prospects deploying Claude Cowork.</p>
+    </header>
+
+    <div class="layout">
+      <!-- ───────── INPUTS ───────── -->
+      <section>
+        <div class="card">
+          <h2 class="card-title">Deployment Inputs</h2>
+
+          <div class="field">
+            <label class="field-label" for="employees">
+              Total employees
+            </label>
+            <div class="input-row">
+              <input type="number" id="employees" min="1" step="1" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="dau">
+              Daily active rate
+              <span class="tooltip" tabindex="0">?
+                <span class="tip-body">Percentage of licensed seats that actively use the tool on a given workday. 50–70% is typical for productivity AI tools 6+ months post-rollout.</span>
+              </span>
+            </label>
+            <div class="input-row">
+              <input type="range" id="dau-range" min="0" max="100" step="1" />
+              <input type="number" id="dau" min="0" max="100" step="1" />
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="prompts">
+              Prompts per active user per day
+            </label>
+            <div class="input-row">
+              <input type="number" id="prompts" min="1" step="1" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="calls">
+              Tool calls per prompt — baseline
+              <span class="tooltip" tabindex="0">?
+                <span class="tip-body">Empirical range is 3–12 for knowledge-worker agent workloads. Single-shot lookups average 1–3; multi-step automation averages 5–15. Use pilot data if available; otherwise default 5 is a defensible midpoint.</span>
+              </span>
+            </label>
+            <div class="input-row">
+              <input type="range" id="calls-range" min="3" max="12" step="1" />
+              <input type="number" id="calls" min="1" step="1" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="workdays">
+              Working days per year
+            </label>
+            <div class="input-row">
+              <input type="number" id="workdays" min="1" max="365" step="1" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="ramp">
+              Year-1 ramp multiplier (calls/prompt by month 12)
+              <span class="tooltip" tabindex="0">?
+                <span class="tip-body">Enterprise AI rollouts typically show 2.5–4× growth in per-user activity over the first 12 months as users learn compound workflows and more integrations come online. Lower for tightly-scoped deployments, higher for broad horizontal rollouts.</span>
+              </span>
+            </label>
+            <div class="input-row">
+              <input type="range" id="ramp-range" min="1.5" max="4.0" step="0.1" />
+              <input type="number" id="ramp" min="1.0" max="10.0" step="0.1" />
+              <span class="input-suffix">×</span>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label">Show monthly ramp curve</span>
+            <label class="switch">
+              <input type="checkbox" id="show-ramp" />
+              <span class="slider-switch"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── RESULTS ───────── -->
+      <section>
+        <div class="hero">
+          <div class="hero-copy">
+            <button class="btn" id="copy-btn" type="button">Copy summary</button>
+          </div>
+          <div class="hero-label">Expected Year-1 AgentGateway calls</div>
+          <div class="hero-number" id="hero-number">—</div>
+          <div class="hero-secondary" id="hero-secondary">—</div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Scenario Comparison</h2>
+          <table class="scenarios">
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th style="text-align:right">Year-1 total calls</th>
+                <th style="text-align:right">Month-12 run-rate / mo</th>
+              </tr>
+            </thead>
+            <tbody id="scenario-body"></tbody>
+          </table>
+        </div>
+
+        <div class="card" id="chart-card">
+          <h2 class="card-title">Monthly Ramp — Expected Scenario</h2>
+          <div class="chart-wrap">
+            <canvas id="ramp-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Assumptions</h2>
+          <p class="assumptions" id="assumptions">—</p>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Estimates only. Actual call volume depends on workload mix, integration breadth, and user behavior.
+      Recommend pilot measurement for contract sizing.
+    </footer>
+  </div>
+
+  <div class="copy-toast" id="toast">Summary copied to clipboard</div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────────────
+    // TUNABLE DEFAULTS — edit these to change the calculator's starting state
+    // ─────────────────────────────────────────────────────────────────────
+    const DEFAULTS = {
+      employees:        1000,   // total employees
+      dauPct:           60,     // daily active rate %
+      promptsPerDay:    20,     // prompts per active user per day
+      callsPerPrompt:   5,      // tool calls per prompt (baseline)
+      workingDays:      250,    // working days per year
+      rampMultiplier:   3.0,    // year-1 ramp multiplier by month 12
+      showRamp:         true,   // show monthly ramp chart by default
+    };
+
+    // Scenario deltas applied around the Expected case.
+    const SCENARIO_DELTAS = {
+      conservative: { calls: -2, ramp: -0.5 },
+      aggressive:   { calls: +3, ramp: +0.5 },
+    };
+
+    // Floors so scenarios can't go below sensible minimums.
+    const FLOORS = { callsPerPrompt: 1, ramp: 1.0 };
+
+    // Ramp curve phases — edit to reshape the adoption curve.
+    // Each month's multiplier sits between 1.0 (baseline) and rampMultiplier (peak).
+    const RAMP_CURVE = {
+      pilotMonths:      3,    // months 1..3 held at 1.0× baseline
+      midPhaseEnd:      6,    // months 4..6 ramp to (midFraction × ramp)
+      midFraction:      0.6,  // fraction of peak reached by end of mid phase
+      finalMonth:       12,
+    };
+
+    // ─────────────────────────────────────────────────────────────────────
+    // DOM refs
+    // ─────────────────────────────────────────────────────────────────────
+    const $ = (id) => document.getElementById(id);
+    const inputs = {
+      employees:  $('employees'),
+      dau:        $('dau'),
+      dauRange:   $('dau-range'),
+      prompts:    $('prompts'),
+      calls:      $('calls'),
+      callsRange: $('calls-range'),
+      workdays:   $('workdays'),
+      ramp:       $('ramp'),
+      rampRange:  $('ramp-range'),
+      showRamp:   $('show-ramp'),
+    };
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Math
+    // ─────────────────────────────────────────────────────────────────────
+    function monthMultiplier(month, ramp) {
+      const { pilotMonths, midPhaseEnd, midFraction, finalMonth } = RAMP_CURVE;
+      if (month <= pilotMonths) return 1.0;
+      const midPeak = ramp * midFraction;
+      if (month <= midPhaseEnd) {
+        const t = (month - pilotMonths) / (midPhaseEnd - pilotMonths);
+        return 1.0 + (midPeak - 1.0) * t;
+      }
+      const t = (month - midPhaseEnd) / (finalMonth - midPhaseEnd);
+      return midPeak + (ramp - midPeak) * t;
+    }
+
+    function compute({ employees, dauPct, promptsPerDay, callsPerPrompt, workingDays, ramp }) {
+      const dailyActiveUsers = employees * (dauPct / 100);
+      const annualSteady = dailyActiveUsers * promptsPerDay * callsPerPrompt * workingDays;
+      const monthlyBase = annualSteady / 12;
+      const monthly = [];
+      let year1Total = 0;
+      for (let m = 1; m <= 12; m++) {
+        const mult = monthMultiplier(m, ramp);
+        const calls = monthlyBase * mult;
+        monthly.push({ month: m, multiplier: mult, calls });
+        year1Total += calls;
+      }
+      const month12RunRate = monthly[11].calls;
+      return {
+        dailyActiveUsers,
+        annualSteady,
+        monthlyBase,
+        monthly,
+        year1Total,
+        month12RunRate,
+        peakCallsPerPrompt: callsPerPrompt * ramp,
+      };
+    }
+
+    function scenarioFor(base, delta) {
+      const calls = Math.max(FLOORS.callsPerPrompt, base.callsPerPrompt + delta.calls);
+      const ramp  = Math.max(FLOORS.ramp,           base.ramp + delta.ramp);
+      return { ...base, callsPerPrompt: calls, ramp };
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Formatting
+    // ─────────────────────────────────────────────────────────────────────
+    const fmtInt = (n) => Math.round(n).toLocaleString('en-US');
+
+    function fmtBigUnit(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + ' billion';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + ' million';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return fmtInt(n);
+    }
+
+    function fmtCompact(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return fmtInt(n);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Render
+    // ─────────────────────────────────────────────────────────────────────
+    let chart = null;
+
+    function readInputs() {
+      const num = (el, fallback) => {
+        const v = parseFloat(el.value);
+        return Number.isFinite(v) ? v : fallback;
+      };
+      return {
+        employees:      Math.max(1, num(inputs.employees, DEFAULTS.employees)),
+        dauPct:         Math.min(100, Math.max(0, num(inputs.dau, DEFAULTS.dauPct))),
+        promptsPerDay:  Math.max(0, num(inputs.prompts, DEFAULTS.promptsPerDay)),
+        callsPerPrompt: Math.max(1, num(inputs.calls, DEFAULTS.callsPerPrompt)),
+        workingDays:    Math.min(365, Math.max(1, num(inputs.workdays, DEFAULTS.workingDays))),
+        ramp:           Math.max(FLOORS.ramp, num(inputs.ramp, DEFAULTS.rampMultiplier)),
+      };
+    }
+
+    function render() {
+      const base = readInputs();
+      const expected     = compute({ ...base });
+      const conservative = compute(scenarioFor(base, SCENARIO_DELTAS.conservative));
+      const aggressive   = compute(scenarioFor(base, SCENARIO_DELTAS.aggressive));
+
+      // Hero
+      $('hero-number').textContent = fmtInt(expected.year1Total) + ' calls';
+      $('hero-secondary').textContent = '≈ ' + fmtBigUnit(expected.year1Total) +
+        ' · Month-12 run-rate: ' + fmtCompact(expected.month12RunRate) + '/mo';
+
+      // Scenario table
+      const rows = [
+        { key: 'conservative', label: 'Conservative', detail: 'calls/prompt −2, ramp −0.5', data: conservative, base: scenarioFor(base, SCENARIO_DELTAS.conservative) },
+        { key: 'expected',     label: 'Expected',     detail: 'as entered',                 data: expected,     base },
+        { key: 'aggressive',   label: 'Aggressive',   detail: 'calls/prompt +3, ramp +0.5', data: aggressive,   base: scenarioFor(base, SCENARIO_DELTAS.aggressive) },
+      ];
+
+      const body = $('scenario-body');
+      body.innerHTML = '';
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        if (r.key === 'expected') tr.classList.add('expected');
+        tr.innerHTML = `
+          <td>
+            <div class="scenario-name">${r.label}</div>
+            <div class="scenario-detail">${r.detail} · ${r.base.callsPerPrompt} calls/prompt → ${(r.base.callsPerPrompt * r.base.ramp).toFixed(1)} at peak</div>
+          </td>
+          <td class="num">${fmtInt(r.data.year1Total)}<div class="scenario-detail">${fmtBigUnit(r.data.year1Total)}</div></td>
+          <td class="num">${fmtInt(r.data.month12RunRate)}<div class="scenario-detail">${fmtCompact(r.data.month12RunRate)}/mo</div></td>
+        `;
+        body.appendChild(tr);
+      }
+
+      // Assumptions
+      const dailyActive = expected.dailyActiveUsers;
+      const peakCalls = base.callsPerPrompt * base.ramp;
+      $('assumptions').innerHTML =
+        `Assuming <strong>${fmtInt(base.employees)} employees</strong> with a <strong>${base.dauPct}% daily active rate</strong> ` +
+        `yields <strong>${fmtInt(dailyActive)} daily active users</strong>, each generating ` +
+        `<strong>${base.promptsPerDay} prompts/day</strong> at an average of <strong>${base.callsPerPrompt} tool calls/prompt</strong> at launch, ` +
+        `ramping to <strong>${peakCalls.toFixed(1)} calls/prompt</strong> by month 12 (${base.ramp.toFixed(1)}× growth). ` +
+        `Across <strong>${base.workingDays} working days/year</strong>, this projects ` +
+        `<strong>${fmtInt(expected.year1Total)} Year-1 AgentGateway calls</strong> ` +
+        `(≈ ${fmtBigUnit(expected.year1Total)}), reaching a steady-state monthly run-rate of ` +
+        `<strong>${fmtInt(expected.month12RunRate)}</strong> calls/month at month 12.`;
+
+      // Chart toggle
+      const chartCard = $('chart-card');
+      if (inputs.showRamp.checked) {
+        chartCard.style.display = '';
+        renderChart(expected.monthly);
+      } else {
+        chartCard.style.display = 'none';
+      }
+    }
+
+    function renderChart(monthly) {
+      const ctx = $('ramp-chart').getContext('2d');
+      const labels = monthly.map((m) => 'M' + m.month);
+      const data = monthly.map((m) => Math.round(m.calls));
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+      gradient.addColorStop(0, 'rgba(0, 149, 206, 0.28)');
+      gradient.addColorStop(1, 'rgba(0, 149, 206, 0.02)');
+
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = data;
+        chart.resize();
+        chart.update('none');
+        return;
+      }
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Monthly AgentGateway calls',
+            data,
+            borderColor: '#0095CE',
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#0095CE',
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1F2933',
+              padding: 10,
+              callbacks: {
+                label: (ctx) => ' ' + fmtInt(ctx.parsed.y) + ' calls',
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#616E7C',
+                font: { size: 11 },
+                callback: (v) => fmtCompact(v),
+              },
+              grid: { color: '#EDF0F3' },
+            },
+            x: {
+              ticks: { color: '#616E7C', font: { size: 11 } },
+              grid: { display: false },
+            },
+          },
+        },
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Copy summary
+    // ─────────────────────────────────────────────────────────────────────
+    function buildSummaryText() {
+      const base = readInputs();
+      const expected     = compute({ ...base });
+      const conservative = compute(scenarioFor(base, SCENARIO_DELTAS.conservative));
+      const aggressive   = compute(scenarioFor(base, SCENARIO_DELTAS.aggressive));
+      const peakCalls = base.callsPerPrompt * base.ramp;
+
+      const lines = [
+        'AgentGateway Call Volume Estimate — Claude Cowork deployment',
+        '',
+        'Assumptions:',
+        `  • Employees: ${fmtInt(base.employees)}`,
+        `  • Daily active rate: ${base.dauPct}%  (${fmtInt(expected.dailyActiveUsers)} DAU)`,
+        `  • Prompts per active user per day: ${base.promptsPerDay}`,
+        `  • Tool calls per prompt (baseline → peak): ${base.callsPerPrompt} → ${peakCalls.toFixed(1)}`,
+        `  • Year-1 ramp multiplier: ${base.ramp.toFixed(1)}×`,
+        `  • Working days per year: ${base.workingDays}`,
+        '',
+        'Results (Year-1 total calls / Month-12 run-rate per month):',
+        `  Conservative:  ${fmtInt(conservative.year1Total)}  /  ${fmtInt(conservative.month12RunRate)}`,
+        `  Expected:      ${fmtInt(expected.year1Total)}  /  ${fmtInt(expected.month12RunRate)}`,
+        `  Aggressive:    ${fmtInt(aggressive.year1Total)}  /  ${fmtInt(aggressive.month12RunRate)}`,
+        '',
+        `Expected Year-1: ${fmtInt(expected.year1Total)} calls (≈ ${fmtBigUnit(expected.year1Total)})`,
+        '',
+        'Estimates only. Actual call volume depends on workload mix, integration breadth,',
+        'and user behavior. Recommend pilot measurement for contract sizing.',
+      ];
+      return lines.join('\n');
+    }
+
+    async function copySummary() {
+      const text = buildSummaryText();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // Fallback for non-HTTPS contexts
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(ta);
+      }
+      const btn = $('copy-btn');
+      const toast = $('toast');
+      btn.classList.add('copied');
+      btn.textContent = 'Copied ✓';
+      toast.classList.add('show');
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.textContent = 'Copy summary';
+        toast.classList.remove('show');
+      }, 1800);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Wire up inputs
+    // ─────────────────────────────────────────────────────────────────────
+    function syncPair(numEl, rangeEl) {
+      if (!rangeEl) return;
+      numEl.addEventListener('input', () => { rangeEl.value = numEl.value; render(); });
+      rangeEl.addEventListener('input', () => { numEl.value = rangeEl.value; render(); });
+    }
+
+    function initDefaults() {
+      inputs.employees.value = DEFAULTS.employees;
+      inputs.dau.value = DEFAULTS.dauPct;
+      inputs.dauRange.value = DEFAULTS.dauPct;
+      inputs.prompts.value = DEFAULTS.promptsPerDay;
+      inputs.calls.value = DEFAULTS.callsPerPrompt;
+      inputs.callsRange.value = DEFAULTS.callsPerPrompt;
+      inputs.workdays.value = DEFAULTS.workingDays;
+      inputs.ramp.value = DEFAULTS.rampMultiplier.toFixed(1);
+      inputs.rampRange.value = DEFAULTS.rampMultiplier.toFixed(1);
+      inputs.showRamp.checked = DEFAULTS.showRamp;
+    }
+
+    initDefaults();
+
+    inputs.employees.addEventListener('input', render);
+    inputs.prompts.addEventListener('input', render);
+    inputs.workdays.addEventListener('input', render);
+    inputs.showRamp.addEventListener('change', render);
+    syncPair(inputs.dau, inputs.dauRange);
+    syncPair(inputs.calls, inputs.callsRange);
+    syncPair(inputs.ramp, inputs.rampRange);
+
+    $('copy-btn').addEventListener('click', copySummary);
+
+    render();
+  </script>
+</body>
+</html>
