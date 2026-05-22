@@ -793,9 +793,8 @@
       const aggressive   = compute(scenarioFor(base, SCENARIO_DELTAS.aggressive));
 
       // Hero
-      $('hero-number').textContent = fmtInt(expected.year1Total) + ' calls';
-      $('hero-secondary').textContent = '≈ ' + fmtBigUnit(expected.year1Total) +
-        ' · Month-12 run-rate: ' + fmtCompact(expected.month12RunRate) + '/mo';
+      $('hero-number').textContent = fmtBigUnit(expected.year1Total) + ' calls';
+      $('hero-secondary').textContent = 'Month-12 run-rate: ' + fmtCompact(expected.month12RunRate) + '/mo';
 
       // Scenario table
       const rows = [
@@ -814,8 +813,8 @@
             <div class="scenario-name">${r.label}</div>
             <div class="scenario-detail">${r.detail} · ${r.base.callsPerPrompt} calls/prompt → ${(r.base.callsPerPrompt * r.base.ramp).toFixed(1)} at peak</div>
           </td>
-          <td class="num">${fmtInt(r.data.year1Total)}<div class="scenario-detail">${fmtBigUnit(r.data.year1Total)}</div></td>
-          <td class="num">${fmtInt(r.data.month12RunRate)}<div class="scenario-detail">${fmtCompact(r.data.month12RunRate)}/mo</div></td>
+          <td class="num">${fmtBigUnit(r.data.year1Total)}</td>
+          <td class="num">${fmtCompact(r.data.month12RunRate)}/mo</td>
         `;
         body.appendChild(tr);
       }
@@ -829,9 +828,9 @@
         `<strong>${base.promptsPerDay} prompts/day</strong> at an average of <strong>${base.callsPerPrompt} AgentGateway calls/prompt</strong> at launch (LLM round-trips + MCP tool calls combined), ` +
         `ramping to <strong>${peakCalls.toFixed(1)} calls/prompt</strong> by month 12 (${base.ramp.toFixed(1)}× growth). ` +
         `Across <strong>${base.workingDays} working days/year</strong>, this projects ` +
-        `<strong>${fmtInt(expected.year1Total)} Year-1 AgentGateway calls</strong> ` +
-        `(≈ ${fmtBigUnit(expected.year1Total)}), reaching a steady-state monthly run-rate of ` +
-        `<strong>${fmtInt(expected.month12RunRate)}</strong> calls/month at month 12.`;
+        `<strong>${fmtBigUnit(expected.year1Total)} Year-1 AgentGateway calls</strong>, ` +
+        `reaching a steady-state monthly run-rate of ` +
+        `<strong>${fmtCompact(expected.month12RunRate)}</strong> calls/month at month 12.`;
 
       // Chart toggle
       const chartCard = $('chart-card');
