@@ -604,8 +604,8 @@
 
     // Scenario deltas applied around the Expected case.
     const SCENARIO_DELTAS = {
-      conservative: { calls: -2, ramp: -0.5 },
-      aggressive:   { calls: +3, ramp: +0.5 },
+      conservative: { calls: -3, ramp: -0.5 },
+      aggressive:   { calls: +5, ramp: +0.5 },
     };
 
     // Floors so scenarios can't go below sensible minimums.
@@ -734,9 +734,9 @@
 
       // Scenario table
       const rows = [
-        { key: 'conservative', label: 'Conservative', detail: 'calls/prompt −2, ramp −0.5', data: conservative, base: scenarioFor(base, SCENARIO_DELTAS.conservative) },
+        { key: 'conservative', label: 'Conservative', detail: 'calls/prompt −3, ramp −0.5', data: conservative, base: scenarioFor(base, SCENARIO_DELTAS.conservative) },
         { key: 'expected',     label: 'Expected',     detail: 'as entered',                 data: expected,     base },
-        { key: 'aggressive',   label: 'Aggressive',   detail: 'calls/prompt +3, ramp +0.5', data: aggressive,   base: scenarioFor(base, SCENARIO_DELTAS.aggressive) },
+        { key: 'aggressive',   label: 'Aggressive',   detail: 'calls/prompt +5, ramp +0.5', data: aggressive,   base: scenarioFor(base, SCENARIO_DELTAS.aggressive) },
       ];
 
       const body = $('scenario-body');
