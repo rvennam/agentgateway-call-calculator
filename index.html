@@ -503,7 +503,7 @@
               </span>
             </label>
             <div class="input-row">
-              <input type="range" id="calls-range" min="3" max="12" step="1" />
+              <input type="range" id="calls-range" min="3" max="25" step="1" />
               <input type="number" id="calls" min="1" step="1" />
             </div>
           </div>
@@ -593,7 +593,7 @@
     // TUNABLE DEFAULTS — edit these to change the calculator's starting state
     // ─────────────────────────────────────────────────────────────────────
     const DEFAULTS = {
-      employees:        1000,   // total employees
+      employees:        5000,   // total employees
       dauPct:           60,     // daily active rate %
       promptsPerDay:    20,     // prompts per active user per day
       callsPerPrompt:   5,      // tool calls per prompt (baseline)
