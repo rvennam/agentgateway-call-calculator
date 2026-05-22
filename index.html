@@ -242,6 +242,44 @@
       min-width: 16px;
     }
 
+    .segmented {
+      display: flex;
+      background: #F2F4F7;
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .seg-btn {
+      flex: 1;
+      padding: 7px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 120ms, color 120ms, box-shadow 120ms;
+    }
+
+    .seg-btn:hover { color: var(--text); }
+
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      font-weight: 600;
+    }
+
+    .profile-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
     .toggle-row {
       display: flex;
       align-items: center;
@@ -461,6 +499,21 @@
           <h2 class="card-title">Deployment Inputs</h2>
 
           <div class="field">
+            <label class="field-label">
+              Workload profile
+              <span class="tooltip" tabindex="0">?
+                <span class="tip-body">One-click presets that fill prompts/day and calls/prompt with empirically-anchored values. Chat-heavy ≈ Cowork chat (LangSmith 1.4× LLM-call-per-trace baseline). Mixed ≈ knowledge workers with some agentic browser/desktop. Code-heavy ≈ Claude Code agentic loops (Solo internal + Dish-scale data). Tweak any input below — the selector switches to "Custom".</span>
+              </span>
+            </label>
+            <div class="segmented" id="profile-seg">
+              <button type="button" class="seg-btn" data-profile="chat">Chat-heavy</button>
+              <button type="button" class="seg-btn active" data-profile="mixed">Mixed</button>
+              <button type="button" class="seg-btn" data-profile="code">Code-heavy</button>
+            </div>
+            <div class="profile-hint" id="profile-hint"></div>
+          </div>
+
+          <div class="field">
             <label class="field-label" for="employees">
               Total employees
             </label>
@@ -499,12 +552,12 @@
             <label class="field-label" for="calls">
               AgentGateway calls per prompt — baseline
               <span class="tooltip" tabindex="0">?
-                <span class="tip-body">Count both LLM round-trips and MCP tool calls — AgentGateway fronts both. A typical agent turn = N LLM calls (reasoning steps) + M tool calls. Knowledge-worker chat: 5–15 combined per prompt. Agentic coding (Claude Code CLI): 20–50+ per turn (5–15 LLM round-trips × multiple tool calls each). Use pilot data if available; 10 is a defensible blended midpoint.</span>
+                <span class="tip-body">Count both LLM round-trips and MCP tool calls — AgentGateway fronts both. Empirical anchors: <b>Chat ≈ 1.4×</b> (LangSmith production telemetry), <b>Cowork ≈ 7–16×</b>, <b>Code ≈ 20–60×</b> (Solo internal observation, 7.7 steps/trace baseline). Pick the value that matches your prospect's dominant surface, or use the Workload profile presets above.</span>
               </span>
             </label>
             <div class="input-row">
-              <input type="range" id="calls-range" min="3" max="50" step="1" />
-              <input type="number" id="calls" min="1" step="1" />
+              <input type="range" id="calls-range" min="1" max="50" step="0.5" />
+              <input type="number" id="calls" min="0.5" step="0.5" />
             </div>
           </div>
 
@@ -607,6 +660,18 @@
       conservative: { calls: -3, ramp: -0.5 },
       aggressive:   { calls: +5, ramp: +0.5 },
     };
+
+    // Workload presets — empirically anchored. Selecting one fills promptsPerDay
+    // and callsPerPrompt; user-edit reverts the segmented control to "Custom".
+    const WORKLOAD_PROFILES = {
+      chat:  { label: 'Chat-heavy',  promptsPerDay: 12, callsPerPrompt: 1.5,
+               hint: 'Cowork-style conversational chat. Fan-out ≈ 1.4× (mostly LLM round-trips, ~22% of traces involve tools).' },
+      mixed: { label: 'Mixed',       promptsPerDay: 20, callsPerPrompt: 10,
+               hint: 'Knowledge workers with some agentic browser/desktop use. Fan-out ≈ 10× (LangSmith 7.7 steps/trace + tool calls).' },
+      code:  { label: 'Code-heavy',  promptsPerDay: 50, callsPerPrompt: 35,
+               hint: 'Claude Code / agentic coding loops dominate. Fan-out ≈ 35× (read → reason → edit → test → repeat).' },
+    };
+    const DEFAULT_PROFILE = 'mixed';
 
     // Floors so scenarios can't go below sensible minimums.
     const FLOORS = { callsPerPrompt: 1, ramp: 1.0 };
@@ -927,15 +992,55 @@
       inputs.showRamp.checked = DEFAULTS.showRamp;
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // Workload profile selector
+    // ─────────────────────────────────────────────────────────────────────
+    let suppressCustom = false;
+
+    function setActiveProfile(name) {
+      document.querySelectorAll('.seg-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.profile === name);
+      });
+    }
+
+    function setHint(text) { $('profile-hint').textContent = text; }
+
+    function applyProfile(name) {
+      const p = WORKLOAD_PROFILES[name];
+      if (!p) return;
+      suppressCustom = true;
+      inputs.prompts.value = p.promptsPerDay;
+      inputs.calls.value = p.callsPerPrompt;
+      inputs.callsRange.value = p.callsPerPrompt;
+      suppressCustom = false;
+      setActiveProfile(name);
+      setHint(p.hint);
+      render();
+    }
+
+    function markCustom() {
+      if (suppressCustom) return;
+      setActiveProfile(null);
+      setHint('Custom values — adjust prompts/day and calls/prompt directly, or pick a preset above to reset.');
+    }
+
     initDefaults();
+    setActiveProfile(DEFAULT_PROFILE);
+    setHint(WORKLOAD_PROFILES[DEFAULT_PROFILE].hint);
+
+    document.querySelectorAll('.seg-btn').forEach((b) => {
+      b.addEventListener('click', () => applyProfile(b.dataset.profile));
+    });
 
     inputs.employees.addEventListener('input', render);
-    inputs.prompts.addEventListener('input', render);
     inputs.workdays.addEventListener('input', render);
     inputs.showRamp.addEventListener('change', render);
+    inputs.prompts.addEventListener('input', () => { markCustom(); render(); });
     syncPair(inputs.dau, inputs.dauRange);
     syncPair(inputs.calls, inputs.callsRange);
     syncPair(inputs.ramp, inputs.rampRange);
+    inputs.calls.addEventListener('input', markCustom);
+    inputs.callsRange.addEventListener('input', markCustom);
 
     $('copy-btn').addEventListener('click', copySummary);
 

@@ -13,6 +13,8 @@ A single-file, client-side calculator that helps Solo.io sellers estimate AgentG
 All tunables live as named constants at the top of the `<script>` block in `index.html`:
 
 - `DEFAULTS` — starting values for every input (employees, DAU %, prompts/day, calls/prompt, working days, ramp multiplier, show-ramp toggle).
+- `WORKLOAD_PROFILES` — the Chat-heavy / Mixed / Code-heavy preset values for `prompts/day` and `calls/prompt`, anchored to LangSmith telemetry, Solo internal AgentGateway observations, and Dish-scale field data. Update these if your empirical ranges shift.
+- `DEFAULT_PROFILE` — which profile is selected on first load.
 - `SCENARIO_DELTAS` — how the Conservative and Aggressive scenarios deviate from Expected.
 - `FLOORS` — minimum values for `callsPerPrompt` and `ramp` so adjusted scenarios can't drop below sane bounds.
 - `RAMP_CURVE` — phase lengths and shape of the adoption curve (pilot months, mid-phase end, fraction-of-peak reached mid-phase).
